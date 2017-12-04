@@ -64,6 +64,6 @@ class News:
 
     json_obj = json.loads(result)
     print(json.dumps(json_obj, indent=2))
-  
+
 news = News("bing-api.key")
 news.RunExample(False)
