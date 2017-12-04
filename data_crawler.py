@@ -7,6 +7,13 @@ import pickle
 import os
 import time
 
+def append_timestamp_to_file_name(base_fn):
+    t = time.gmtime()
+    f_name = "{}-{}-{}-{}-{}-{}-{}".format(base_fn, t.tm_year, t.tm_mon,
+      t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
+    return f_name
+
+
 from html.parser import HTMLParser
 #https://stackoverflow.com/questions/753052/strip-html-from-strings-in-pythoni
 class MLStripper(HTMLParser):
@@ -93,9 +100,7 @@ class HumanEvaluator:
 
       classified_sentences.append(classified_sentence)
 
-    t = time.gmtime()
-    f_name = "{}-{}-{}-{}-{}-{}-{}".format(text_tag, t.tm_year, t.tm_mon,
-      t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
+    f_name = append_timestamp_to_file_name(text_tag)
 
     with open(f_name, 'wb') as fp:
       pickle.dump(classified_sentences, fp)
