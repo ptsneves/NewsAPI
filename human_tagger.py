@@ -5,32 +5,7 @@ from nltk import tokenize
 from nltk import tag
 import pickle
 import os
-import time
-
-def append_timestamp_to_file_name(base_fn):
-    t = time.gmtime()
-    f_name = "{}-{}-{}-{}-{}-{}-{}".format(base_fn, t.tm_year, t.tm_mon,
-      t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
-    return f_name
-
-
-from html.parser import HTMLParser
-#https://stackoverflow.com/questions/753052/strip-html-from-strings-in-pythoni
-class MLStripper(HTMLParser):
-    def __init__(self):
-        self.reset()
-        self.strict = False
-        self.convert_charrefs= True
-        self.fed = []
-    def handle_data(self, d):
-        self.fed.append(d)
-    def get_data(self):
-        return ''.join(self.fed)
-
-def strip_tags(html):
-    s = MLStripper()
-    s.feed(html)
-    return s.get_data()
+import utils
 
 class HumanTagger:
   Dataset_Path = "./datasets/tags/"
@@ -40,7 +15,7 @@ class HumanTagger:
     #self.pos_sentences = tag.pos_tag_sents(self.tokenized_sentences)
     #print(self.pos_sentences)
 
-  def print_selected(self, tagged_sentence):
+  def printSelected(self, tagged_sentence):
     tag_found = False
     d = []
     for word, custom_tag in tagged_sentence:
@@ -51,8 +26,8 @@ class HumanTagger:
     if tag_found:
       print()
 
-  def get_raw_data(self, raw_input_data):
-    path_w_prefix = Dataset_Path + raw_input_data
+  def getRawData(self, raw_input_data):
+    path_w_prefix = HumanTagger.Dataset_Path + raw_input_data
 
     path = None
     if os.path.exists(path_w_prefix):
@@ -66,8 +41,8 @@ class HumanTagger:
     else:
       return raw_input_data
 
-  def tokenize_raw_text(self, raw_input_data):
-    text = strip_tags(str(get_raw_data(raw_input_data)))
+  def tokenizeRawText(self, raw_input_data):
+    text = utils.HTMLStripper.stripTags(str(self.getRawData(raw_input_data)))
     sentences = tokenize.sent_tokenize(text)
     tokenized_sentences = []
     for sentence in sentences:
@@ -78,9 +53,9 @@ class HumanTagger:
              'tokenized-sentences' : tokenized_sentences
             }
 
-  def classify_sentence(self, raw_input_data, text_tag):
+  def classifySentence(self, raw_input_data, text_tag):
     classified_sentences  = []
-    token_data = self.tokenize_raw_text(raw_input_data)
+    token_data = self.tokenizeRawText(raw_input_data)
     for sentence in token_data['tokenized-sentences']:
       classified_sentence = []
       accepted = False
@@ -95,53 +70,40 @@ class HumanTagger:
           classified_sentence.append((word, text_tag if str(i) in r_split else None))
 
 
-        self.print_selected(classified_sentence)
+        self.printSelected(classified_sentence)
         accepted = True if input("Accept? y/n: ") in ['y', ''] else False
 
       classified_sentences.append(classified_sentence)
 
-    f_name = append_timestamp_to_file_name(text_tag)
+    f_name = utils.appendTimestamToFileName(text_tag)
 
     with open(f_name, 'wb') as fp:
       pickle.dump(classified_sentences, fp)
 
-  def get_classified_words(self, text_tag, dump_file):
-    path = os.path.join(HumanEvaluator.Dataset_Path, text_tag, dump_file)
+  def getClassifiedWords(self, text_tag, dump_file):
+    path = os.path.join(HumanTagger.Dataset_Path, text_tag, dump_file)
     with open(path, 'rb') as f:
       return pickle.load(f)
 
-  def show_classified_words(self, dump_file):
-    r = self.get_classified_words(dump_file)
+  def showClassifiedWords(self, dump_file):
+    r = self.getClassifiedWords(dump_file)
     for sentence in r:
-      self.print_selected(sentence)
+      self.printSelected(sentence)
 
-def untag_sentences(tagged_sentences):
-  untagged_sentences = []
-  for s in tagged_sentences:
-    untagged_sentences.append(nltk.tag.util.untag(s))
+  def runShowClassifiedWordsExample():
+    ev = HumanTagger()
+    tagged_sentences = []
+    tagged_sentences.extend(ev.getClassifiedWords('part-of-assignment',
+      'part-of-assignment-2017-12-2-17-22-12'))
 
-  return untagged_sentences
+    tagged_sentences.extend(ev.getClassifiedWords('part-of-assignment',
+      'part-of-assignment-2017-12-2-18-38-11'))
 
-ev = HumanEvaluator()
-tagged_sentences = []
-tagged_sentences.extend(ev.get_classified_words('part-of-assignment',
-  'part-of-assignment-2017-12-2-17-22-12'))
+    print (tagged_sentences)
 
-tagged_sentences.extend(ev.get_classified_words('part-of-assignment',
-  'part-of-assignment-2017-12-2-18-38-11'))
+  def runClassifiySentenceExample():
+    ev = HumanTagger()
+    ev.classifySentence("datasets/texts/ADM", "part-of-assignment")
 
-untagged_sentences = untag_sentences(tagged_sentences)
-
-from nltk.corpus import brown
-brown_tagged_sents = brown.tagged_sents(categories='news')
-
-
-t_default = nltk.DefaultTagger('NN')
-
-FLOATING_POINT_REGEX = (r'[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?.', 'NUM')
-t_regexp = nltk.RegexpTagger([FLOATING_POINT_REGEX], backoff = t_default)
-t_bigram = nltk.BigramTagger(brown_tagged_sents, backoff = t_regexp)
-print(t_bigram.tag_sents(untagged_sentences))
-
-#ev.classify_sentence("ADM", "part-of-assignment")
-#ev.show_classified_words('part-of-assignment-2017-12-2-18-38-11')
+#HumanTagger.runClassifiySentenceExample()
+#HumanTagger.runShowClassifiedWordsExample()
