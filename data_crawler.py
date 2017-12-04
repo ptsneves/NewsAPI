@@ -32,7 +32,7 @@ def strip_tags(html):
     s.feed(html)
     return s.get_data()
 
-class HumanEvaluator:
+class HumanTagger:
   Dataset_Path = "./datasets/tags/"
   def __init__(self):
     pass
