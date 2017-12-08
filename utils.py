@@ -7,16 +7,18 @@ def appendTimestamToFileName(base_fn):
     t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
   return f_name
 
-def download(url, output_fn = None):
+def download(url, output_fn = None, check_size = True):
   import urllib.request
   import os
 
   def isSameFile(output_fn):
     r = False
     if output_fn and os.path.exists(output_fn):
-      file_size = int(urllib.request.urlopen(url).info().get('Content-Length', -1))
-      r = file_size == os.path.getsize(output_fn)
-
+      if check_size:
+        file_size = int(urllib.request.urlopen(url).info().get('Content-Length', -1))
+        r = file_size == os.path.getsize(output_fn)
+      else:
+        r = True
     return r
 
   #https://stackoverflow.com/a/13895723/227990

@@ -18,7 +18,7 @@ class NewsTagger(nltk.tag.api.TaggerI):
 
   def saveToFile(self, fileName):
     with open(fileName, 'w') as f:
-      pickle.dump(self)
+      pickle.dump(self, f)
 
   def __enter__(self, autosave = None):
     self.autosave = autosave
